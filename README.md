@@ -2,8 +2,6 @@
 
 A slick Next.js interface for generating procedural PNG maps on demand. Tweak tile batches, experiment with multiple growth modes, and download production-ready images without leaving the browser.
 
-https://github.com/aliknr/map-generator-ui
-
 ## Features
 
 - Interactive map controls for width/height, seed strings, polishing, and water alpha
