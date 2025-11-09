@@ -267,9 +267,9 @@ function TileEditor({ tiles, onChange }: TileEditorProps) {
 }
 
 const DEFAULT_REQUEST: MapRequest = {
-  w: 64,
-  h: 64,
-  tiles: "2x2*400,2x1*300,1x1*120",
+  w: 320,
+  h: 320,
+  tiles: "2x2*4000,2x1*3000,1x1*1200",
   mode: "center",
   rings: 10,
   logTone: 1,
