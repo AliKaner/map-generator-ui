@@ -1,10 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 
-import {
-  MapRequest,
-  generateMap,
-  normalizeRequest,
-} from "@/lib/map-generator";
+import { MapRequest, generateMap, normalizeRequest } from "@/lib/map-generator";
 
 export const runtime = "nodejs";
 
@@ -15,17 +11,20 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     return NextResponse.json(
       {
-        error: `invalid JSON: ${error instanceof Error ? error.message : "unknown error"}`,
+        error: `invalid JSON: ${
+          error instanceof Error ? error.message : "unknown error"
+        }`,
       },
-      { status: 400 },
+      { status: 400 }
     );
   }
 
   try {
     const params = normalizeRequest(payload);
     const result = generateMap(params);
+    const body = new Uint8Array(result.data);
 
-    return new NextResponse(result.data, {
+    return new NextResponse(body, {
       status: 200,
       headers: {
         "Content-Type": "image/png",
@@ -40,8 +39,7 @@ export async function POST(request: NextRequest) {
       {
         error: error instanceof Error ? error.message : "unknown error",
       },
-      { status: 400 },
+      { status: 400 }
     );
   }
 }
-
