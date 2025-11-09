@@ -1,36 +1,122 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# PNG Map Generator UI
+
+A slick Next.js interface for generating procedural PNG maps on demand. Tweak tile batches, experiment with multiple growth modes, and download production-ready images without leaving the browser.
+
+https://github.com/aliknr/map-generator-ui
+
+## Features
+
+- Interactive map controls for width/height, seed strings, polishing, and water alpha
+- Tile batch editor with add/edit/remove support and automatic payload formatting
+- Five generation modes (`center`, `weighted`, `islands`, `dual-continents`, `ring`) including deterministic seeds
+- Live preview with instant retries and one-click PNG download
+- Next.js API route powered by a TypeScript port of the original PNG map generator
+
+## Tech Stack
+
+- [Next.js 16](https://nextjs.org/) App Router
+- React 19 with the new React Compiler
+- Tailwind-style utility classes (PostCSS + Tailwind CSS v4)
+- Procedural map core implemented in TypeScript using [`pngjs`](https://github.com/lukeapage/pngjs) and [`seedrandom`](https://github.com/davidbau/seedrandom)
 
 ## Getting Started
 
-First, run the development server:
+### Prerequisites
+
+- Node.js 18.18+ (Next.js 16 requirement)
+- [pnpm](https://pnpm.io/) 8+
+
+### Installation
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
+pnpm install
 pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open `http://localhost:3000` to use the UI. The page auto-refreshes on save.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### Other scripts
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```bash
+pnpm build   # production build
+pnpm start   # serve the build
+pnpm lint    # run eslint
+```
 
-## Learn More
+## Usage
 
-To learn more about Next.js, take a look at the following resources:
+1. Adjust core dimensions and edit tile batches via the “Tiles” panel.
+2. Pick a generation mode and optional seed to get deterministic results.
+3. Toggle advanced fields (rings, polish, background alpha, etc.) as needed.
+4. Click **Generate Map** or **Run Again** to produce a fresh image.
+5. Use **Download PNG** to save the most recent render.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+### Tile batch format
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+- Comma-separated entries: `WIDTHxHEIGHT*COUNT`
+- Example: `2x2*4000,2x1*3000,1x1*1200`
+- `COUNT` defaults to `1` when omitted.
 
-## Deploy on Vercel
+The UI keeps the list in sync with the API payload, so you can manage batches visually without worrying about formatting errors.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## API
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+The UI talks to `POST /api/generate`. You can call it directly to integrate the generator elsewhere.
+
+```json
+{
+  "w": 320,
+  "h": 320,
+  "tiles": "2x2*4000,2x1*3000,1x1*1200",
+  "mode": "center",
+  "seed": "demo",
+  "rings": 10,
+  "logTone": 1,
+  "brownCap": 8,
+  "bgA": 0,
+  "polish": false
+}
+```
+
+### Request fields
+
+| Field                    | Type    | Default                      | Notes                                                                                  |
+| ------------------------ | ------- | ---------------------------- | -------------------------------------------------------------------------------------- | --------------------------------- |
+| `w`, `h`                 | number  | `320`                        | Canvas size in pixels. Must be positive.                                               |
+| `tiles`                  | string  | `2x2*4000,2x1*3000,1x1*1200` | Tile batches in the format above.                                                      |
+| `mode`                   | string  | `center`                     | One of `center`, `weighted`, `islands`, `dual-continents`, `ring` (aliases supported). |
+| `seed`                   | string  | `""`                         | Deterministic seed. Empty string yields pseudo-random runs.                            |
+| `rings`                  | number  | `10`                         | Band count for `ring` mode.                                                            |
+| `ringStart`, `ringEnd`   | number  | `0.1`, `0.8`                 | Radial bounds (0–1) for ring growth.                                                   |
+| `ka`                     | number  | `1`                          | Multiplier applied to every tile count.                                                |
+| `cap`                    | number  | `0`                          | Hard ceiling for total tile placements (0 = uncapped).                                 |
+| `logTone`                | `0      | 1`                           | `1`                                                                                    | Enables logarithmic tone mapping. |
+| `brownCap`               | number  | `8`                          | Max terrain density before brown shading kicks in.                                     |
+| `bgA`                    | number  | `0`                          | Background alpha (0–255).                                                              |
+| `rot`                    | `0      | 1`                           | `1`                                                                                    | Toggles tile rotation randomness. |
+| `polish`                 | boolean | `false`                      | Enables lightweight tile edge smoothing.                                               |
+| `islands`, `islandRFrac` | number  | `4`, `0.25`                  | Extra knobs for `islands` mode.                                                        |
+| `n22`, `n21`, `n11`      | number  | `0`                          | Legacy boosts for specific tile sizes.                                                 |
+
+Successful responses return PNG binary data. Helpful metadata is exposed via headers:
+
+- `X-Tile-Batches` — total number of tile batches after normalization
+- `X-Tile-Count` — total placements performed
+- `X-Seed` — numeric seed used in the PRNG
+
+Errors are returned as JSON with an `error` field and a `400` status code.
+
+## Project Structure
+
+- `src/app/page.tsx` — main client UI with form logic, preview, and tile editor
+- `src/app/api/generate/route.ts` — API handler proxying requests to the generator core
+- `src/lib/map-generator.ts` — procedural generation engine, request normalization, and PNG rendering
+- `public/logo.png` — branding used in the UI header
+
+## Contributing
+
+Issues and PRs are welcome. Please run `pnpm lint` before submitting a pull request.
+
+## License
+
+No license file has been provided yet. Reach out to the repository owner if you need clarity on usage rights.
