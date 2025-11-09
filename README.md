@@ -77,7 +77,7 @@ The UI talks to `POST /api/generate`. You can call it directly to integrate the 
 ```
 
 ### Request fields
-
+```
 | Field                    | Type    | Default                      | Notes                                                                                  |
 | ------------------------ | ------- | ---------------------------- | -------------------------------------------------------------------------------------- | --------------------------------- |
 | `w`, `h`                 | number  | `320`                        | Canvas size in pixels. Must be positive.                                               |
@@ -95,7 +95,7 @@ The UI talks to `POST /api/generate`. You can call it directly to integrate the 
 | `polish`                 | boolean | `false`                      | Enables lightweight tile edge smoothing.                                               |
 | `islands`, `islandRFrac` | number  | `4`, `0.25`                  | Extra knobs for `islands` mode.                                                        |
 | `n22`, `n21`, `n11`      | number  | `0`                          | Legacy boosts for specific tile sizes.                                                 |
-
+```
 Successful responses return PNG binary data. Helpful metadata is exposed via headers:
 
 - `X-Tile-Batches` — total number of tile batches after normalization
